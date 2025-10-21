@@ -1,40 +1,40 @@
 import streamlit as st
 import requests
 import pandas as pd
-import plotly.express as px
+from io import BytesIO
 
-BACKEND_URL = "http://127.0.0.1:8000"
+BACKEND_URL = "http://127.0.0.1:8000"  # Codespaces / localhost
 
-st.set_page_config(page_title="Threat Intelligence Report Generator", layout="wide")
-st.title("🧠 Threat Intelligence Report Generator")
+st.set_page_config(page_title="Threat Intelligence Dashboard", layout="wide")
+st.title("🧠 Threat Intelligence Dashboard – Secure Edition")
 
-ips = st.text_area("IP addresses (one per line)")
-domains = st.text_area("Domains (one per line)")
-emails = st.text_area("Emails (one per line)")
+st.sidebar.header("📊 Input Data")
 
-if st.button("🚀 Run Analysis"):
-    payload = {
-        "ips": [i.strip() for i in ips.splitlines() if i.strip()],
-        "domains": [d.strip() for d in domains.splitlines() if d.strip()],
-        "emails": [e.strip() for e in emails.splitlines() if e.strip()]
-    }
-    r = requests.post(f"{BACKEND_URL}/analyze/", json=payload)
-    if r.status_code == 200:
-        st.success("✅ Analysis completed.")
-        results = r.json()
-        for key, df_data in results.items():
-            st.subheader(key.upper())
-            df = pd.DataFrame(df_data)
-            st.dataframe(df)
-            if key == "ip":
-                fig = px.bar(df, x="ip", y="abuseScore", color="country")
-                st.plotly_chart(fig)
-    else:
-        st.error("Failed to connect to backend.")
+ip = st.sidebar.text_input("Enter IP address:")
+domain = st.sidebar.text_input("Enter Domain:")
+email = st.sidebar.text_input("Enter Email:")
 
-if st.button("📄 Generate PDF Report"):
-    r = requests.get(f"{BACKEND_URL}/export/pdf")
-    if r.status_code == 200:
-        with open("threat_report.pdf", "wb") as f:
-            f.write(r.content)
-        st.success("PDF report generated. Saved as threat_report.pdf")
+if st.sidebar.button("Generate Report"):
+    data = {"ip": ip, "domain": domain, "email": email}
+    try:
+        # PDF isteği
+        res = requests.post(f"{BACKEND_URL}/generate-pdf", json=data)
+        if res.status_code == 200:
+            st.success("✅ PDF report generated successfully!")
+            pdf_bytes = res.content
+            st.download_button(
+                label="📥 Download Threat Report (PDF)",
+                data=pdf_bytes,
+                file_name="threat_report.pdf",
+                mime="application/pdf"
+            )
+
+            # CSV export (optional)
+            df = pd.DataFrame([data])
+            csv = df.to_csv(index=False).encode('utf-8')
+            st.download_button("⬇️ Download CSV", csv, "input_data.csv", "text/csv")
+
+        else:
+            st.error(f"❌ Error: {res.text}")
+    except Exception as e:
+        st.error(f"Connection failed: {e}")
