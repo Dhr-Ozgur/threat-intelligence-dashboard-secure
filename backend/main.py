@@ -1,10 +1,10 @@
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
-from reports.generator import generate_report
+from backend.generator import generate_report
 
 app = FastAPI(title="Threat Intelligence Backend")
 
-# CORS (frontend -> backend)
+# CORS: frontend erişimi için
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
