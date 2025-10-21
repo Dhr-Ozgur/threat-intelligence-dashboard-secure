@@ -12,10 +12,10 @@ from services.breachdirectory import get_email_report
 from exports.export_csv import export_combined_csv
 
 # ----------------------------------------------------------
-# 🧠 Threat Intelligence Dashboard – Secure Edition (Unified)
+# 🧠 Threat Intelligence Dashboard – Secure Unified Edition
 # ----------------------------------------------------------
 st.set_page_config(page_title="Threat Intelligence Dashboard – Secure", layout="wide")
-st.title("🧠 Threat Intelligence Dashboard – Secure Edition")
+st.title("🧠 Threat Intelligence Dashboard – Secure Unified Edition")
 
 # --- Check missing API keys ---
 missing = []
@@ -31,27 +31,34 @@ if missing:
                ". Use `.env` locally or GitHub Codespaces Secrets.")
 
 # ----------------------------------------------------------
-# 🔍 Input Fields
+# Input fields
 # ----------------------------------------------------------
-st.sidebar.header("🔎 Input data")
+st.sidebar.header("🔎 Enter Data for Analysis")
 
 ip_input = st.sidebar.text_area("IP addresses (one per line):", key="ip_input")
 domain_input = st.sidebar.text_area("Domain names (one per line):", key="domain_input")
 email_input = st.sidebar.text_area("Email addresses (one per line):", key="email_input")
 
-# ----------------------------------------------------------
-# 🚀 Run all analyses with one button
-# ----------------------------------------------------------
-if st.sidebar.button("🚀 Run Full Analysis"):
-    st.session_state["df_ip"] = pd.DataFrame()
-    st.session_state["df_dom"] = pd.DataFrame()
-    st.session_state["df_em"] = pd.DataFrame()
+# Initialize session state for results if not set
+for key in ["df_ip", "df_dom", "df_em"]:
+    if key not in st.session_state:
+        st.session_state[key] = pd.DataFrame()
 
+# ----------------------------------------------------------
+# Run all analyses at once
+# ----------------------------------------------------------
+def run_full_analysis():
+    """Run IP, domain, and email analysis in sequence."""
     ips = [i.strip() for i in ip_input.splitlines() if i.strip()]
     domains = [d.strip() for d in domain_input.splitlines() if d.strip()]
     emails = [e.strip() for e in email_input.splitlines() if e.strip()]
 
-    # --- IP Analysis ---
+    all_empty = not any([ips, domains, emails])
+    if all_empty:
+        st.info("Please enter at least one IP, domain, or email.")
+        return
+
+    # --- IP analysis ---
     if ips:
         with st.spinner("Fetching IP reports..."):
             try:
@@ -67,7 +74,7 @@ if st.sidebar.button("🚀 Run Full Analysis"):
                 logger.exception("IP analysis error")
                 st.error(f"IP analysis failed: {e}")
 
-    # --- Domain Analysis ---
+    # --- Domain analysis ---
     if domains:
         with st.spinner("Fetching domain reports..."):
             try:
@@ -83,7 +90,7 @@ if st.sidebar.button("🚀 Run Full Analysis"):
                 logger.exception("Domain analysis error")
                 st.error(f"Domain analysis failed: {e}")
 
-    # --- Email Analysis ---
+    # --- Email analysis ---
     if emails:
         with st.spinner("Fetching email breach data..."):
             try:
@@ -101,10 +108,18 @@ if st.sidebar.button("🚀 Run Full Analysis"):
 
     st.success("✅ All analyses completed successfully.")
 
+
 # ----------------------------------------------------------
-# 💾 CSV Export
+# Run button
+# ----------------------------------------------------------
+if st.sidebar.button("🚀 Run All Analyses"):
+    run_full_analysis()
+
+# ----------------------------------------------------------
+# Export CSV
 # ----------------------------------------------------------
 st.sidebar.header("💾 Export & Download")
+
 if st.sidebar.button("📦 Export Combined CSV"):
     try:
         df_ip = st.session_state.get("df_ip", pd.DataFrame())
@@ -116,11 +131,14 @@ if st.sidebar.button("📦 Export Combined CSV"):
         else:
             csv_bytes = export_combined_csv(df_ip, df_dom, df_em)
             st.success("📁 CSV file is ready for download.")
-            st.download_button("📥 Download combined_report.csv", csv_bytes, "combined_report.csv", "text/csv")
+            st.download_button("📥 Download combined_report.csv",
+                               csv_bytes, "combined_report.csv", "text/csv")
     except Exception as e:
         logger.exception("CSV export error")
         st.error(f"Export failed: {e}")
 
 st.markdown("---")
-st.caption("🛡️ Secure unified version – analyzes IPs, domains & emails together. "
-           "API keys secured via environment variables. Masked emails and sanitized logs.")
+st.caption(
+    "🛡️ Secure unified version – performs IP, domain, and email analysis together. "
+    "API keys secured via environment variables. CSV uses masked emails and sanitized logs."
+)
