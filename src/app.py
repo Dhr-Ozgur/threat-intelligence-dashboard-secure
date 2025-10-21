@@ -12,12 +12,12 @@ from services.breachdirectory import get_email_report
 from exports.export_csv import export_combined_csv
 
 # ----------------------------------------------------------
-# 🧠 Threat Intelligence Dashboard – Secure Edition
+# 🧠 Threat Intelligence Dashboard – Secure Edition (Unified)
 # ----------------------------------------------------------
 st.set_page_config(page_title="Threat Intelligence Dashboard – Secure", layout="wide")
 st.title("🧠 Threat Intelligence Dashboard – Secure Edition")
 
-
+# --- Check missing API keys ---
 missing = []
 if not ABUSEIPDB_KEY:
     missing.append("ABUSEIPDB_KEY")
@@ -27,99 +27,100 @@ if not RAPIDAPI_KEY:
     missing.append("RAPIDAPI_KEY")
 
 if missing:
-    st.warning("⚠️ Ontbrekende environment-variabelen: " + ", ".join(missing) + ". "
-               "Gebruik `.env` lokaal of Codespaces Secrets in GitHub.")
+    st.warning("⚠️ Missing environment variables: " + ", ".join(missing) +
+               ". Use `.env` locally or GitHub Codespaces Secrets.")
 
+# ----------------------------------------------------------
+# 🔍 Input Fields
+# ----------------------------------------------------------
+st.sidebar.header("🔎 Input data")
 
-st.sidebar.header("🔍 Analyseer IP-adressen")
-ip_input = st.sidebar.text_area("Voer IP's in (één per regel):", key="ip_input")
+ip_input = st.sidebar.text_area("IP addresses (one per line):", key="ip_input")
+domain_input = st.sidebar.text_area("Domain names (one per line):", key="domain_input")
+email_input = st.sidebar.text_area("Email addresses (one per line):", key="email_input")
 
-if st.sidebar.button("Analyseer IP’s"):
+# ----------------------------------------------------------
+# 🚀 Run all analyses with one button
+# ----------------------------------------------------------
+if st.sidebar.button("🚀 Run Full Analysis"):
+    st.session_state["df_ip"] = pd.DataFrame()
+    st.session_state["df_dom"] = pd.DataFrame()
+    st.session_state["df_em"] = pd.DataFrame()
+
     ips = [i.strip() for i in ip_input.splitlines() if i.strip()]
+    domains = [d.strip() for d in domain_input.splitlines() if d.strip()]
+    emails = [e.strip() for e in email_input.splitlines() if e.strip()]
+
+    # --- IP Analysis ---
     if ips:
-        with st.spinner("IP-rapport ophalen..."):
+        with st.spinner("Fetching IP reports..."):
             try:
                 df_ip = get_ip_report(ips)
-                st.session_state["df_ip"] = df_ip  
-                st.subheader("IP Resultaten")
+                st.session_state["df_ip"] = df_ip
+                st.subheader("📊 IP Results")
                 st.dataframe(df_ip, use_container_width=True)
                 if not df_ip.empty:
                     fig = px.bar(df_ip, x="ip", y="abuseConfidenceScore",
                                  color="countryCode", title="Abuse Confidence Score per IP")
                     st.plotly_chart(fig, use_container_width=True)
-                st.success("✅ IP-analyse voltooid.")
             except Exception as e:
-                logger.exception("IP analyse fout")
-                st.error(f"IP analyse mislukt: {e}")
-    else:
-        st.info("Geen IP’s ingevoerd.")
+                logger.exception("IP analysis error")
+                st.error(f"IP analysis failed: {e}")
 
-
-st.sidebar.header("🌐 Analyseer Domeinen")
-domain_input = st.sidebar.text_area("Voer domeinnamen in (één per regel):", key="domain_input")
-
-if st.sidebar.button("Analyseer Domeinen"):
-    domains = [d.strip() for d in domain_input.splitlines() if d.strip()]
+    # --- Domain Analysis ---
     if domains:
-        with st.spinner("Domein-rapport ophalen..."):
+        with st.spinner("Fetching domain reports..."):
             try:
                 df_dom = get_domain_report(domains)
-                st.session_state["df_dom"] = df_dom  
-                st.subheader("Domein Resultaten")
+                st.session_state["df_dom"] = df_dom
+                st.subheader("🌐 Domain Results")
                 st.dataframe(df_dom, use_container_width=True)
                 if not df_dom.empty:
                     fig2 = px.bar(df_dom, x="domain", y="malicious",
-                                  color="suspicious", title="Malicious detecties per domein")
+                                  color="suspicious", title="Malicious detections per domain")
                     st.plotly_chart(fig2, use_container_width=True)
-                st.success("✅ Domeinanalyse voltooid.")
             except Exception as e:
-                logger.exception("Domein analyse fout")
-                st.error(f"Domein analyse mislukt: {e}")
-    else:
-        st.info("Geen domeinen ingevoerd.")
+                logger.exception("Domain analysis error")
+                st.error(f"Domain analysis failed: {e}")
 
-
-st.sidebar.header("📧 Controleer E-mailadressen")
-email_input = st.sidebar.text_area("Voer e-mailadressen in (één per regel):", key="email_input")
-
-if st.sidebar.button("Controleer E-mails"):
-    emails = [e.strip() for e in email_input.splitlines() if e.strip()]
+    # --- Email Analysis ---
     if emails:
-        with st.spinner("E-mailbreaches ophalen..."):
+        with st.spinner("Fetching email breach data..."):
             try:
                 df_em = get_email_report(emails)
-                st.session_state["df_em"] = df_em 
-                st.subheader("E-mail Breach Resultaten")
+                st.session_state["df_em"] = df_em
+                st.subheader("📧 Email Breach Results")
                 st.dataframe(df_em, use_container_width=True)
                 if not df_em.empty:
                     fig3 = px.bar(df_em, x="email_masked", y="count", color="count",
-                                  title="Aantal datalekken per e-mailadres")
+                                  title="Number of breaches per email address")
                     st.plotly_chart(fig3, use_container_width=True)
-                st.success("✅ E-mailanalyse voltooid.")
             except Exception as e:
-                logger.exception("E-mail analyse fout")
-                st.error(f"E-mail analyse mislukt: {e}")
-    else:
-        st.info("Geen e-mailadressen ingevoerd.")
+                logger.exception("Email analysis error")
+                st.error(f"Email analysis failed: {e}")
 
+    st.success("✅ All analyses completed successfully.")
 
+# ----------------------------------------------------------
+# 💾 CSV Export
+# ----------------------------------------------------------
 st.sidebar.header("💾 Export & Download")
-if st.sidebar.button("📦 Export Combined CSV (IP + Domain + Email)"):
+if st.sidebar.button("📦 Export Combined CSV"):
     try:
         df_ip = st.session_state.get("df_ip", pd.DataFrame())
         df_dom = st.session_state.get("df_dom", pd.DataFrame())
         df_em = st.session_state.get("df_em", pd.DataFrame())
 
         if df_ip.empty and df_dom.empty and df_em.empty:
-            st.warning("⚠️ Geen gegevens gevonden. Voer eerst analyses uit.")
+            st.warning("⚠️ No data found. Please run the analysis first.")
         else:
             csv_bytes = export_combined_csv(df_ip, df_dom, df_em)
-            st.success("📁 CSV-bestand klaar om te downloaden.")
+            st.success("📁 CSV file is ready for download.")
             st.download_button("📥 Download combined_report.csv", csv_bytes, "combined_report.csv", "text/csv")
     except Exception as e:
-        logger.exception("Export fout")
-        st.error(f"Export mislukt: {e}")
+        logger.exception("CSV export error")
+        st.error(f"Export failed: {e}")
 
 st.markdown("---")
-st.caption("🛡️ Secure edition – API-keys beschermd via `.env` of Codespaces Secrets. "
-           "CSV bevat gemaskeerde e-mails en logt geen gevoelige data.")
+st.caption("🛡️ Secure unified version – analyzes IPs, domains & emails together. "
+           "API keys secured via environment variables. Masked emails and sanitized logs.")
