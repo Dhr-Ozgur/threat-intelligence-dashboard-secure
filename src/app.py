@@ -17,7 +17,7 @@ from exports.export_csv import export_combined_csv
 st.set_page_config(page_title="Threat Intelligence Dashboard – Secure", layout="wide")
 st.title("🧠 Threat Intelligence Dashboard – Secure Edition")
 
-# --- Güvenlik kontrolü: eksik API key var mı ---
+
 missing = []
 if not ABUSEIPDB_KEY:
     missing.append("ABUSEIPDB_KEY")
@@ -30,7 +30,7 @@ if missing:
     st.warning("⚠️ Ontbrekende environment-variabelen: " + ", ".join(missing) + ". "
                "Gebruik `.env` lokaal of Codespaces Secrets in GitHub.")
 
-# --- IP Analizi ---
+
 st.sidebar.header("🔍 Analyseer IP-adressen")
 ip_input = st.sidebar.text_area("Voer IP's in (één per regel):", key="ip_input")
 
@@ -40,7 +40,7 @@ if st.sidebar.button("Analyseer IP’s"):
         with st.spinner("IP-rapport ophalen..."):
             try:
                 df_ip = get_ip_report(ips)
-                st.session_state["df_ip"] = df_ip  # 🔸 Export için kaydet
+                st.session_state["df_ip"] = df_ip  
                 st.subheader("IP Resultaten")
                 st.dataframe(df_ip, use_container_width=True)
                 if not df_ip.empty:
@@ -54,7 +54,7 @@ if st.sidebar.button("Analyseer IP’s"):
     else:
         st.info("Geen IP’s ingevoerd.")
 
-# --- Domein Analizi ---
+
 st.sidebar.header("🌐 Analyseer Domeinen")
 domain_input = st.sidebar.text_area("Voer domeinnamen in (één per regel):", key="domain_input")
 
@@ -64,7 +64,7 @@ if st.sidebar.button("Analyseer Domeinen"):
         with st.spinner("Domein-rapport ophalen..."):
             try:
                 df_dom = get_domain_report(domains)
-                st.session_state["df_dom"] = df_dom  # 🔸 Export için kaydet
+                st.session_state["df_dom"] = df_dom  
                 st.subheader("Domein Resultaten")
                 st.dataframe(df_dom, use_container_width=True)
                 if not df_dom.empty:
@@ -78,7 +78,7 @@ if st.sidebar.button("Analyseer Domeinen"):
     else:
         st.info("Geen domeinen ingevoerd.")
 
-# --- E-mail Analizi ---
+
 st.sidebar.header("📧 Controleer E-mailadressen")
 email_input = st.sidebar.text_area("Voer e-mailadressen in (één per regel):", key="email_input")
 
@@ -88,7 +88,7 @@ if st.sidebar.button("Controleer E-mails"):
         with st.spinner("E-mailbreaches ophalen..."):
             try:
                 df_em = get_email_report(emails)
-                st.session_state["df_em"] = df_em  # 🔸 Export için kaydet
+                st.session_state["df_em"] = df_em 
                 st.subheader("E-mail Breach Resultaten")
                 st.dataframe(df_em, use_container_width=True)
                 if not df_em.empty:
@@ -102,7 +102,7 @@ if st.sidebar.button("Controleer E-mails"):
     else:
         st.info("Geen e-mailadressen ingevoerd.")
 
-# --- CSV Export ---
+
 st.sidebar.header("💾 Export & Download")
 if st.sidebar.button("📦 Export Combined CSV (IP + Domain + Email)"):
     try:
