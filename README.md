@@ -1,4 +1,4 @@
-# 🧠 Threat Intelligence Dashboard – Secure Edition
+# 🧠 Threat Intelligence Dashboard - Secure Edition
 
 Een veilige, modulaire Streamlit-applicatie voor het analyseren van IP’s, domeinen en e-mails via OSINT-API’s.
 
