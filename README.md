@@ -27,9 +27,21 @@ You can import this file into Power BI:
 
 ---
 
-## 🧾 PDF Reports
-Each request also produces a professional PDF summary located in `/reports/threat_report.pdf`.
-The report includes:
-- Input metadata
-- Timestamp
-- Structured field-value table
+## 🧠 PDF Report Example
+
+The generated PDF includes:
+- Python & Shield icons
+- Risk score bar chart
+- Colored summary table
+- Timestamp and analyst signature
+
+![PDF Preview](https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg)
+
+---
+
+## ⚙️ Power BI Dashboard
+
+Each run also creates a `powerbi_export.csv` with risk columns.
+You can import it to Power BI and visualize:
+- IP / Domain / Email risk levels
+- Trend analysis per threat source
