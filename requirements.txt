@@ -1,9 +1,7 @@
 fastapi
 uvicorn
-requests
-pandas
 streamlit
+pandas
+requests
 reportlab
 python-dotenv
-plotly
-sqlite-utils
