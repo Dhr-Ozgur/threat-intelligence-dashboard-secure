@@ -1,28 +1,28 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, FileResponse
-from pydantic import BaseModel
+from fastapi import FastAPI, Response
+from fastapi.middleware.cors import CORSMiddleware
 from reports.generator import generate_report
-import os
 
-app = FastAPI(title="Threat Intelligence Backend", version="1.1")
+app = FastAPI(title="Threat Intelligence Backend")
 
-class ReportRequest(BaseModel):
-    ip: str | None = None
-    domain: str | None = None
-    email: str | None = None
+# CORS (frontend -> backend)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def root():
-    return {"status": "ok", "message": "Threat Intelligence Backend Running"}
+    return {"status": "ok", "message": "Backend running"}
 
 @app.post("/generate-pdf")
-def create_pdf(request_data: ReportRequest):
-    data = {
-        "IP Address": request_data.ip or "—",
-        "Domain": request_data.domain or "—",
-        "Email": request_data.email or "—",
-    }
-    pdf_path = generate_report(data)
-    if os.path.exists(pdf_path):
-        return FileResponse(pdf_path, media_type="application/pdf", filename="threat_report.pdf")
-    return JSONResponse(content={"error": "PDF not generated"}, status_code=500)
+def generate_pdf(data: dict):
+    try:
+        path = generate_report(data)
+        with open(path, "rb") as f:
+            pdf_bytes = f.read()
+        return Response(content=pdf_bytes, media_type="application/pdf")
+    except Exception as e:
+        return {"error": str(e)}
