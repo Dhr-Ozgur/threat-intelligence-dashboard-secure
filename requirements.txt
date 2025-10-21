@@ -3,6 +3,7 @@ uvicorn
 streamlit
 pandas
 requests
+python-dotenv
 reportlab
 matplotlib
-python-dotenv
+plotly
