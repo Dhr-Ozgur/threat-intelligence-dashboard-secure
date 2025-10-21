@@ -1,43 +1,28 @@
-from fastapi import FastAPI
-from backend.services.abuseipdb import get_ip_report
-from backend.services.virustotal import get_domain_report
-from backend.services.breachdirectory import get_email_report
-from backend.database import save_result, get_all_results
-from reports.generator import generate_pdf
-from fastapi.responses import FileResponse
-import pandas as pd
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse, FileResponse
+from pydantic import BaseModel
+from reports.generator import generate_report
 import os
 
-app = FastAPI(title="Threat Intelligence Report API")
+app = FastAPI(title="Threat Intelligence Backend", version="1.1")
+
+class ReportRequest(BaseModel):
+    ip: str | None = None
+    domain: str | None = None
+    email: str | None = None
 
 @app.get("/")
 def root():
     return {"status": "ok", "message": "Threat Intelligence Backend Running"}
 
-@app.post("/analyze/")
-def analyze(data: dict):
-    ips = data.get("ips", [])
-    domains = data.get("domains", [])
-    emails = data.get("emails", [])
-    results = {}
-
-    if ips:
-        results["ip"] = get_ip_report(ips)
-    if domains:
-        results["domain"] = get_domain_report(domains)
-    if emails:
-        results["email"] = get_email_report(emails)
-
-    # Save results to SQLite
-    save_result(results)
-    return results
-
-@app.get("/results")
-def get_results():
-    return get_all_results()
-
-@app.get("/export/pdf")
-def export_pdf():
-    df_all = get_all_results(as_df=True)
-    path = generate_pdf(df_all)
-    return FileResponse(path, filename="threat_report.pdf", media_type="application/pdf")
+@app.post("/generate-pdf")
+def create_pdf(request_data: ReportRequest):
+    data = {
+        "IP Address": request_data.ip or "—",
+        "Domain": request_data.domain or "—",
+        "Email": request_data.email or "—",
+    }
+    pdf_path = generate_report(data)
+    if os.path.exists(pdf_path):
+        return FileResponse(pdf_path, media_type="application/pdf", filename="threat_report.pdf")
+    return JSONResponse(content={"error": "PDF not generated"}, status_code=500)
