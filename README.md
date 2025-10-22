@@ -1,4 +1,4 @@
-# 🧠 Threat Intelligence Dashboard — Secure Edition
+# 🧠 Threat Intelligence Dashboard - Secure Edition
 
 A cybersecurity dashboard analyzing IPs, domains, and emails via trusted OSINT APIs.  
 Generates clear reports in CSV (Power BI-ready) and PDF formats. Ensures API key security.
