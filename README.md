@@ -37,6 +37,7 @@ CSV / PDF exports for reporting and Power BI
 🗂️ Directory Layout
 
 threat-intelligence-dashboard-secure/
+
 │
 ├── backend/               # FastAPI backend
 │   ├── main.py
@@ -53,6 +54,7 @@ threat-intelligence-dashboard-secure/
 ├── .env.example           # Example environment variables
 ├── requirements.txt
 └── README.md
+
 
 🔐 Environment Variables
 
