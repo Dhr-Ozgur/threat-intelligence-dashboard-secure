@@ -1,137 +1,74 @@
 import os
-from datetime import datetime
 import pandas as pd
+import matplotlib
+matplotlib.use("Agg")  # GUI olmayan ortamlarda hata engeli
 import matplotlib.pyplot as plt
+from datetime import datetime
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Table, TableStyle
 from reportlab.lib.units import cm
 
-
-def _save_bar_chart(df: pd.DataFrame, x: str, y: str, title: str, out_path: str):
-    if df is None or df.empty or x not in df.columns or y not in df.columns:
+def _save_chart(df: pd.DataFrame, x: str, y: str, title: str, filename: str):
+    if df.empty or x not in df.columns or y not in df.columns:
         return None
-    fig, ax = plt.subplots(figsize=(5, 2.2))
-    ax.bar(df[x].astype(str), df[y])
-    ax.set_title(title, fontsize=10)
-    ax.set_ylabel(y)
-    plt.xticks(rotation=45, ha="right", fontsize=8)
-    plt.tight_layout()
-    plt.savefig(out_path, dpi=120)
-    plt.close()
-    return out_path
-
-
-def _table_for_df(df: pd.DataFrame, cols: list[str], header: str):
-    data = [cols]
-    for _, row in df[cols].head(12).iterrows():
-        data.append([str(row[c]) for c in cols])
-
-    table = Table(data, colWidths=[(16.5*cm)/len(cols)] * len(cols))
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
-        ('GRID', (0, 0), (-1, -1), 0.25, colors.grey),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
-    ]))
-    return header, table
-
-
-def build_pdf(ip_df: pd.DataFrame, dom_df: pd.DataFrame, em_df: pd.DataFrame, out_path: str = "reports/threat_report.pdf"):
     os.makedirs("reports", exist_ok=True)
-    c = canvas.Canvas(out_path, pagesize=A4)
-    w, h = A4
+    path = f"reports/{filename}"
+    plt.figure(figsize=(5, 2))
+    plt.bar(df[x].astype(str), df[y], color="#0077cc")
+    plt.title(title, fontsize=9)
+    plt.xticks(rotation=45, ha="right", fontsize=7)
+    plt.tight_layout()
+    plt.savefig(path)
+    plt.close()
+    return path
 
-    # Header
-    c.setTitle("Threat Intelligence Report")
-    c.setFont("Helvetica-Bold", 20)
-    c.setFillColor(colors.HexColor("#0b3d91"))
-    c.drawString(2*cm, h - 2*cm, "Threat Intelligence Report – Secure + Functional")
-    c.setFont("Helvetica", 11)
+def build_pdf(df_ip, df_dom, df_em, output_path="reports/threat_report.pdf"):
+    os.makedirs("reports", exist_ok=True)
+    c = canvas.Canvas(output_path, pagesize=A4)
+    width, height = A4
+    y = height - 3 * cm
+
+    c.setFont("Helvetica-Bold", 18)
+    c.setFillColor(colors.HexColor("#003366"))
+    c.drawString(2 * cm, y, "Threat Intelligence Report")
     c.setFillColor(colors.black)
-    c.drawString(2*cm, h - 2.7*cm, f"Generated at: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}")
+    c.setFont("Helvetica", 10)
+    c.drawString(2 * cm, y - 0.6 * cm, datetime.utcnow().strftime("Generated at %Y-%m-%d %H:%M UTC"))
+    y -= 1.5 * cm
 
-    # Summary
-    total_rows = sum([0 if d is None else len(d) for d in [ip_df, dom_df, em_df]])
-    c.drawString(2*cm, h - 3.4*cm, f"Summary: {len(ip_df or [])} IPs, {len(dom_df or [])} domains, {len(em_df or [])} emails. Total rows: {total_rows}")
+    def add_section(title, df, x_col, y_col):
+        nonlocal y
+        if df is None or df.empty:
+            return
+        if y < 8 * cm:
+            c.showPage(); y = height - 3 * cm
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(2 * cm, y, title)
+        y -= 0.6 * cm
+        chart_path = _save_chart(df, x_col, y_col, title, f"{title}.png")
+        if chart_path and os.path.exists(chart_path):
+            c.drawImage(chart_path, 2 * cm, y - 4.5 * cm, width=13 * cm, height=4 * cm)
+            y -= 5 * cm
+        cols = df.columns[:4].tolist()
+        data = [cols] + df[cols].head(10).values.tolist()
+        table = Table(data, colWidths=[(16 * cm) / len(cols)] * len(cols))
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+            ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+        ]))
+        w, h = table.wrap(0, 0)
+        table.drawOn(c, 2 * cm, y - h)
+        y -= h + 0.8 * cm
 
-    y = h - 4.2*cm
+    add_section("IP Analysis", df_ip, "ip", "abuseScore")
+    add_section("Domain Analysis", df_dom, "domain", "malicious")
+    add_section("Email Breach Analysis", df_em, "email_masked", "count")
 
-    # IP section
-    if ip_df is not None and not ip_df.empty:
-        c.setFont("Helvetica-Bold", 13)
-        c.drawString(2*cm, y, "IP Analysis")
-        y -= 0.5*cm
-
-        # chart
-        ip_chart = _save_bar_chart(ip_df.fillna(0), "ip", "abuseScore", "Abuse Score per IP", "reports/ip_chart.png")
-        if ip_chart and os.path.exists(ip_chart):
-            c.drawImage(ip_chart, 2*cm, y - 5*cm, width=12*cm, height=4.2*cm, preserveAspectRatio=True, mask='auto')
-            y -= 5.4*cm
-
-        # table
-        cols = [c for c in ["ip", "country", "isp", "abuseScore"] if c in ip_df.columns]
-        header, table = _table_for_df(ip_df, cols, "Top IPs")
-        w_, h_ = table.wrap(16.5*cm, 6*cm)
-        table.drawOn(c, 2*cm, y - h_)
-        y -= h_ + 0.6*cm
-
-    # Domain section
-    if dom_df is not None and not dom_df.empty:
-        if y < 6*cm:
-            c.showPage(); y = h - 2*cm
-        c.setFont("Helvetica-Bold", 13)
-        c.drawString(2*cm, y, "Domain Analysis")
-        y -= 0.5*cm
-
-        dom_chart = _save_bar_chart(dom_df.fillna(0), "domain", "malicious", "Malicious Detections per Domain", "reports/domain_chart.png")
-        if dom_chart and os.path.exists(dom_chart):
-            c.drawImage(dom_chart, 2*cm, y - 5*cm, width=12*cm, height=4.2*cm, preserveAspectRatio=True, mask='auto')
-            y -= 5.4*cm
-
-        cols = [c for c in ["domain", "harmless", "malicious", "suspicious", "undetected"] if c in dom_df.columns]
-        header, table = _table_for_df(dom_df, cols, "Top Domains")
-        w_, h_ = table.wrap(16.5*cm, 6*cm)
-        table.drawOn(c, 2*cm, y - h_)
-        y -= h_ + 0.6*cm
-
-    # Email section
-    if em_df is not None and not em_df.empty:
-        if y < 6*cm:
-            c.showPage(); y = h - 2*cm
-        c.setFont("Helvetica-Bold", 13)
-        c.drawString(2*cm, y, "Email Breach Analysis")
-        y -= 0.5*cm
-
-        em_chart = _save_bar_chart(em_df.fillna(0), "email_masked", "count", "Breaches per Email (masked)", "reports/email_chart.png")
-        if em_chart and os.path.exists(em_chart):
-            c.drawImage(em_chart, 2*cm, y - 5*cm, width=12*cm, height=4.2*cm, preserveAspectRatio=True, mask='auto')
-            y -= 5.4*cm
-
-        cols = [c for c in ["email_masked", "count", "breaches"] if c in em_df.columns]
-        header, table = _table_for_df(em_df, cols, "Top Emails")
-        w_, h_ = table.wrap(16.5*cm, 6*cm)
-        table.drawOn(c, 2*cm, y - h_)
-        y -= h_ + 0.6*cm
-
-    # Footer
-    if y < 3*cm:
-        c.showPage()
     c.setFont("Helvetica-Oblique", 9)
     c.setFillColor(colors.grey)
-    c.drawString(2*cm, 1.5*cm, "Confidential – Generated by Threat Intelligence Dashboard (Secure + Functional)")
-
+    c.drawString(2 * cm, 1.5 * cm, "Generated by Threat Intelligence Dashboard (Secure Edition)")
     c.save()
-
-    # cleanup temp charts
-    for p in ["reports/ip_chart.png", "reports/domain_chart.png", "reports/email_chart.png"]:
-        if os.path.exists(p):
-            try:
-                os.remove(p)
-            except Exception:
-                pass
-
-    return out_path
+    return output_path
