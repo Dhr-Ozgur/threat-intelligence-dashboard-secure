@@ -1,126 +1,116 @@
-# 🧠 Threat Intelligence Dashboard — Secure Edition
+🧠 Threat Intelligence Dashboard — Secure Edition
 
-A modern cybersecurity intelligence tool that analyzes **IP addresses**, **domains**, and **email addresses** using OSINT APIs.  
-It generates interactive visualizations and exports professional reports in both **CSV** and **PDF** formats.
+A professional cybersecurity intelligence dashboard that analyzes IPs, domains, and emails through trusted OSINT APIs.
+It generates clear analytics, Power BI–ready CSVs, and detailed PDF reports — all while keeping API keys secure.
 
----
+🎯 Overview
 
-## 🎯 Overview
+Threat Intelligence Dashboard (Secure Edition) is built for cybersecurity students, analysts, and blue teams.
+It integrates trusted data sources and ensures privacy by masking sensitive information.
 
-**Threat Intelligence Dashboard (Secure Edition)** allows analysts and SOC teams to collect, analyze, and visualize public threat data securely.
+Capabilities:
 
-- IP reputation lookup (AbuseIPDB)  
-- Domain classification (VirusTotal)  
-- Email breach check (BreachDirectory)  
-- CSV export for Power BI  
-- Secure PDF reporting  
+🔍 IP reputation & abuse confidence lookup (AbuseIPDB)
 
----
+🌐 Domain threat classification (VirusTotal)
 
-## ⚙️ Features
+📧 Email breach analysis (BreachDirectory API)
 
-| Function | Description |
-|-----------|-------------|
-| 🧩 IP Analysis | Abuse confidence score, ISP, and country lookup |
-| 🌐 Domain Analysis | Malicious / suspicious detection statistics |
-| 📧 Email Breach Check | BreachDirectory API (RapidAPI) |
-| 📊 CSV Export | Power BI–ready dataset with risk scoring |
-| 🧾 PDF Report | Charts, logo, timestamp, and summary table |
-| 🔐 Secure Config | Environment variables / GitHub Secrets |
-| 🕵️ Data Privacy | Masked emails and anonymized exports |
+📊 Power BI–ready CSV export with risk scores
 
----
+🧾 Secure PDF report generation
 
-## 🗂️ Project Structure
+🔐 Key protection via .env or GitHub Secrets
 
+⚙️ Features
+Category	Description
+🧩 IP Analysis	Retrieve abuse score, ISP, and geolocation
+🌐 Domain Analysis	Detect malicious or suspicious domains
+📧 Email Breach	Query leaked emails securely
+📊 Export System	Combine all results into one dataset
+🧾 PDF Reports	Visual summaries with charts & timestamps
+🔐 Secure Setup	Environment variables only
+🧱 Data Privacy	Email masking and anonymized outputs
+🗂️ Project Structure
 threat-intelligence-dashboard-secure/
 │
 ├── backend/
-│ ├── main.py
-│ ├── report_builder.py
-│ └── services/
+│   ├── main.py
+│   ├── report_builder.py
+│   └── services/
 │
 ├── frontend/
-│ ├── app.py
-│ └── assets/logo.png
+│   ├── app.py
+│   └── assets/banner.png
 │
 ├── reports/
-│ └── threat_report.pdf
+│   └── threat_report.pdf
 │
 ├── .env.example
 ├── requirements.txt
 └── README.md
 
-yaml
-Code kopiëren
+🔐 Environment Variables
+Variable	Description
+ABUSEIPDB_KEY	AbuseIPDB API key
+VT_KEY	VirusTotal API key
+RAPIDAPI_KEY	BreachDirectory API key
 
----
+Example .env file:
 
-## 🔐 Environment Variables
-
-| Variable | Purpose |
-|-----------|----------|
-| `ABUSEIPDB_KEY` | AbuseIPDB API key |
-| `VT_KEY` | VirusTotal API key |
-| `RAPIDAPI_KEY` | BreachDirectory API key |
-
-Example `.env` file:
 ABUSEIPDB_KEY=your_abuseipdb_key
 VT_KEY=your_virustotal_key
 RAPIDAPI_KEY=your_rapidapi_key
 
-yaml
-Code kopiëren
 
-> Use **Codespaces → Settings → Secrets → New Secret** for secure key management.
+💡 Security Tip: Never commit .env files.
+Add secrets under GitHub → Settings → Secrets → Codespaces for automatic injection.
 
----
-
-## 🚀 How to Run
-
-### 1️⃣ Create and Activate Virtual Environment
-```bash
+🚀 How to Run
+1️⃣ Create Environment
 python3 -m venv .venv
 source .venv/bin/activate
+
 2️⃣ Install Dependencies
-bash
-Code kopiëren
 pip install -r requirements.txt
+
 3️⃣ Run Backend
-bash
-Code kopiëren
 uvicorn backend.main:app --reload
+
 4️⃣ Run Frontend
-bash
-Code kopiëren
 streamlit run frontend/app.py
-Then open the Streamlit UI → enter IPs/domains/emails → click Analyze
-and download CSV or PDF outputs.
+
+
+Now open the Streamlit dashboard, enter your IPs/domains/emails, and analyze.
+You can export results as CSV or PDF instantly.
 
 📄 PDF Report
-Report content:
 
-IP abuse score bar chart
+The generated PDF includes:
 
-Domain maliciousness overview
+Abuse confidence score charts
 
-Email breach count chart
+Domain maliciousness breakdown
 
-Overall risk summary (pie chart)
+Email breach counts (masked addresses)
 
-Export timestamp and logo
+Combined risk graph
 
-Output file:
+Timestamp and dashboard logo
 
-bash
-Code kopiëren
+📁 Output location:
+
 reports/threat_report.pdf
+
 📊 Power BI Integration
+
+To visualize risk analytics in Power BI:
+
 Open Power BI → Get Data → Text/CSV
 
 Select data/combined_report.csv
 
-Use these fields for visuals:
+Use columns:
 
 ip_risk
 
@@ -130,40 +120,43 @@ email_risk
 
 exported_at
 
-Recommended chart: Clustered Column or Pie Chart.
+Create a Clustered Column Chart or Pie Chart
 
 🧱 Security Checklist
-✅ .env excluded from commits
 
-✅ API keys never hardcoded
+✅ .env excluded from repository
 
-✅ Masked email output
+✅ No hardcoded keys
 
-✅ Logs contain no sensitive info
+✅ Masked personal data
 
-✅ Rate-limiting between requests
+✅ Encrypted communications
+
+✅ Rate-limited requests
 
 🧩 Tech Stack
 Layer	Technology
 Frontend	Streamlit
 Backend	FastAPI
-Data	Pandas
+Data Processing	Pandas
 Visualization	Plotly / Matplotlib
 PDF Engine	ReportLab
 APIs	AbuseIPDB · VirusTotal · BreachDirectory
-
 🧾 License
+
 MIT License © 2025
 Developed by Dhr-Ozgur
 
-🏁 Release Notes
-Version: v1.0 – Secure Edition
+🏁 Version 1.0 — Secure Edition
+
 Includes:
 
-IP, Domain, and Email analysis
+IP / Domain / Email threat intelligence
 
-Power BI–ready CSV export
+Power BI export
 
-PDF report generator
+PDF reporting
 
-Secure .env configuration model
+Secure key handling
+
+Streamlit + FastAPI integration
