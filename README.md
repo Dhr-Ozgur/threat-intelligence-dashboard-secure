@@ -1,134 +1,60 @@
-🧠 Threat Intelligence Dashboard — Secure Edition
-A professional dashboard for cybersecurity analytics. Analyze IPs, domains, and emails via trusted OSINT APIs. Instantly generate Power BI–ready CSVs and detailed PDF reports — always with secure API key handling.
+🧠 Threat Intelligence Dashboard
 
-🎯 Overview
-Threat Intelligence Dashboard (Secure Edition) is for cybersecurity students, analysts, and blue teams.
-It aggregates trusted sources and keeps your data secure and private.
+A simple and secure dashboard for analyzing IP addresses, domains, and emails using public threat intelligence APIs.
+It helps cybersecurity researchers and analysts quickly detect potential risks and export results for reporting.
 
-🚀 Capabilities
-🔍 IP Reputation & Abuse Score (AbuseIPDB)
+🚀 Features
 
-🌐 Domain Threat Classification (VirusTotal)
+IP, domain, and email reputation checks
 
-📧 Email Breach Search (BreachDirectory)
+Combined analysis and CSV/PDF export
 
-📊 Power BI–Ready CSV Export
+Power BI–ready datasets
 
-🧾 Secure PDF Report Generation
+Secure .env configuration for API keys
 
-🔐 API Key Protection via .env or GitHub Secrets
+Lightweight interface with Streamlit and FastAPI
 
-⚙️ Features
-Category	Description
-🧩 IP Analysis	Retrieve abuse score, ISP, and geolocation
-🌐 Domain Analysis	Detect malicious or suspicious domains
-📧 Email Breach	Query leaked emails securely
-📊 Export System	Combine all results into one dataset
-🧾 PDF Reports	Visual summaries with charts & timestamps
-🔐 Secure Setup	Environment variables only
-🧱 Data Privacy	Email masking and anonymized outputs
-🗂️ Project Structure
-text
-threat-intelligence-dashboard-secure/
-├── backend/
-│   ├── main.py
-│   ├── report_builder.py
-│   └── services/
-├── frontend/
-│   ├── app.py
-│   └── assets/banner.png
-├── reports/
-│   └── threat_report.pdf
-├── .env.example
-├── requirements.txt
-└── README.md
+⚙️ Setup
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+
+Run the backend:
+
+uvicorn backend.main:app --reload
+
+
+Run the frontend:
+
+streamlit run frontend/app.py
+
 🔐 Environment Variables
-Variable	Description
-ABUSEIPDB_KEY	AbuseIPDB API key
-VT_KEY	VirusTotal API key
-RAPIDAPI_KEY	BreachDirectory API key
-Example .env file:
 
-text
+Create a .env file in the root directory:
+
 ABUSEIPDB_KEY=your_abuseipdb_key
 VT_KEY=your_virustotal_key
 RAPIDAPI_KEY=your_rapidapi_key
-💡 Never commit .env files.
-Add secrets under GitHub → Settings → Secrets → Codespaces for automatic injection.
 
-🚀 How to Run
-Create Environment
+📄 Exports
 
-bash
-python3 -m venv .venv
-source .venv/bin/activate
-Install Dependencies
+reports/threat_report.pdf — formatted intelligence report
 
-bash
-pip install -r requirements.txt
-Run Backend
-
-bash
-uvicorn backend.main:app --reload
-Run Frontend
-
-bash
-streamlit run frontend/app.py
-Open your dashboard, enter IPs/domains/emails, and analyze instantly.
-Export results as CSV or PDF.
-
-📄 PDF Report
-Abuse confidence score charts
-
-Domain threat details
-
-Email breach counts (masked)
-
-Combined risk graph
-
-Timestamp & logo
-
-Output: reports/threat_report.pdf
-
-📊 Power BI Integration
-To visualize in Power BI:
-
-Open Power BI → Get Data → Text/CSV
-
-Choose data/combined_report.csv
-
-Use columns: ip_risk, domain_risk, email_risk, exported_at
-
-Create a Clustered Column or Pie Chart
-
-🧱 Security Checklist
-✅ .env excluded
-✅ No hardcoded keys
-✅ Masked personal data
-✅ Encrypted communications
-✅ Rate-limited requests
+data/combined_report.csv — Power BI–ready dataset
 
 🧩 Tech Stack
-Layer	Technology
-Frontend	Streamlit
-Backend	FastAPI
-Data Processing	Pandas
-Visualization	Plotly / Matplotlib
-PDF Engine	ReportLab
-APIs	AbuseIPDB · VirusTotal · BreachDirectory
-🧾 License
+
+Frontend: Streamlit
+
+Backend: FastAPI
+
+Data: Pandas, Plotly, ReportLab
+
+APIs: AbuseIPDB · VirusTotal · BreachDirectory
+
+📜 License
+
 MIT License © 2025
 Developed by Dhr-Ozgur
-
-🏁 Version 1.0 — Secure Edition
-Includes:
-
-IP / Domain / Email intelligence
-
-Power BI export
-
-PDF reporting
-
-Secure key handling
-
-Streamlit + FastAPI integration
