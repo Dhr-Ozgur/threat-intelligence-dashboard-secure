@@ -7,91 +7,89 @@ from datetime import datetime
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
-from reportlab.platypus import Table, TableStyle
+from reportlab.platypus import Table, TableStyle, Image
 from reportlab.lib.units import cm
 
 
 def _save_chart(df, x, y, title, filename):
-    """Create bar chart safely with NaN cleanup"""
-    try:
-        if df is None or df.empty or x not in df.columns or y not in df.columns:
-            return None
-        df = df.copy()
-        df[y] = pd.to_numeric(df[y], errors="coerce").fillna(0)  # 👈 Boş değerleri 0 yap
-        os.makedirs("reports", exist_ok=True)
-        path = f"reports/{filename}.png"
-        plt.figure(figsize=(5, 2))
-        plt.bar(df[x].astype(str), df[y], color="#0077cc")
-        plt.title(title, fontsize=9)
-        plt.xticks(rotation=45, ha="right", fontsize=7)
-        plt.tight_layout()
-        plt.savefig(path)
-        plt.close()
-        return path
-    except Exception as e:
-        print(f"[Chart Error] {e}")
+    """Create a cleaner chart for each dataset"""
+    if df is None or df.empty or x not in df.columns or y not in df.columns:
         return None
+    df = df.copy()
+    df[y] = pd.to_numeric(df[y], errors="coerce").fillna(0)
+    os.makedirs("reports", exist_ok=True)
+    path = f"reports/{filename}.png"
+    plt.figure(figsize=(6, 3.5))
+    bars = plt.bar(df[x].astype(str), df[y], color=["#005EB8", "#FFB81C", "#76BC21"])
+    plt.title(title, fontsize=11, weight="bold")
+    plt.xticks(rotation=30, ha="right", fontsize=8)
+    plt.tight_layout()
+    plt.savefig(path, dpi=200)
+    plt.close()
+    return path
+
+
+def _add_table(c, df, y):
+    """Render a DataFrame as a styled table"""
+    df = df.fillna("-")
+    cols = list(df.columns[:5])
+    data = [cols] + df[cols].head(10).astype(str).values.tolist()
+    col_width = max(3.0, 16 / len(cols)) * cm
+    table = Table(data, colWidths=[col_width] * len(cols))
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#003366")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("GRID", (0, 0), (-1, -1), 0.3, colors.grey),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+    ]))
+    w, h = table.wrap(0, 0)
+    table.drawOn(c, 2 * cm, y - h)
+    return y - h - 1 * cm
 
 
 def build_pdf(df_ip=None, df_dom=None, df_em=None, output_path="reports/threat_report.pdf"):
-    """Generate PDF report with safe data handling"""
-    try:
-        os.makedirs("reports", exist_ok=True)
-        c = canvas.Canvas(output_path, pagesize=A4)
-        width, height = A4
-        y = height - 3 * cm
+    os.makedirs("reports", exist_ok=True)
+    c = canvas.Canvas(output_path, pagesize=A4)
+    width, height = A4
+    y = height - 3 * cm
 
-        # Header
-        c.setFont("Helvetica-Bold", 18)
-        c.setFillColor(colors.HexColor("#003366"))
-        c.drawString(2 * cm, y, "Threat Intelligence Report")
-        c.setFillColor(colors.black)
-        c.setFont("Helvetica", 10)
-        c.drawString(2 * cm, y - 0.6 * cm, datetime.utcnow().strftime("Generated at %Y-%m-%d %H:%M UTC"))
-        y -= 1.5 * cm
+    # Header
+    c.setFont("Helvetica-Bold", 18)
+    c.setFillColor(colors.HexColor("#003366"))
+    c.drawString(2 * cm, y, "Threat Intelligence Report")
+    c.setFillColor(colors.black)
+    c.setFont("Helvetica", 10)
+    c.drawString(2 * cm, y - 0.5 * cm, datetime.utcnow().strftime("Generated at %Y-%m-%d %H:%M UTC"))
+    y -= 1.5 * cm
 
-        def add_section(title, df, x_col, y_col):
-            nonlocal y
-            if df is None or df.empty:
-                return
-            if y < 8 * cm:
-                c.showPage()
-                y = height - 3 * cm
-            c.setFont("Helvetica-Bold", 12)
-            c.drawString(2 * cm, y, title)
-            y -= 0.6 * cm
+    def add_section(title, df, x_col, y_col):
+        nonlocal y
+        if df is None or df.empty:
+            return
+        if y < 10 * cm:
+            c.showPage()
+            y = height - 3 * cm
+        c.setFont("Helvetica-Bold", 13)
+        c.setFillColor(colors.HexColor("#005EB8"))
+        c.drawString(2 * cm, y, title)
+        y -= 0.8 * cm
 
-            chart_path = _save_chart(df, x_col, y_col, title, title)
-            if chart_path and os.path.exists(chart_path):
-                c.drawImage(chart_path, 2 * cm, y - 4.5 * cm, width=13 * cm, height=4 * cm)
-                y -= 5 * cm
+        chart_path = _save_chart(df, x_col, y_col, title, title.replace(" ", "_"))
+        if chart_path and os.path.exists(chart_path):
+            c.drawImage(chart_path, 2 * cm, y - 6 * cm, width=14 * cm, height=5 * cm)
+            y -= 6.5 * cm
 
-            cols = [col for col in df.columns[:4]]
-            df = df.fillna("-")
-            data = [cols] + df[cols].head(10).astype(str).values.tolist()
-            table = Table(data, colWidths=[(16 * cm) / len(cols)] * len(cols))
-            table.setStyle(TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
-            ]))
-            w, h = table.wrap(0, 0)
-            table.drawOn(c, 2 * cm, y - h)
-            y -= h + 0.8 * cm
+        y = _add_table(c, df, y)
 
-        # Sections
-        add_section("IP Analysis", df_ip, "ip", "abuseConfidenceScore")
-        add_section("Domain Analysis", df_dom, "domain", "malicious")
-        add_section("Email Breach Analysis", df_em, "email_masked", "count")
+    add_section("IP Analysis", df_ip, "ip", "abuseConfidenceScore")
+    add_section("Domain Analysis", df_dom, "domain", "malicious")
+    add_section("Email Breach Analysis", df_em, "email_masked", "count")
 
-        # Footer
-        c.setFont("Helvetica-Oblique", 9)
-        c.setFillColor(colors.grey)
-        c.drawString(2 * cm, 1.5 * cm, "Generated by Threat Intelligence Dashboard (Secure Edition)")
-        c.save()
-
-        return output_path
-
-    except Exception as e:
-        print(f"[PDF Error] {e}")
-        return None
+    # Footer
+    c.setFont("Helvetica-Oblique", 9)
+    c.setFillColor(colors.grey)
+    c.drawString(2 * cm, 1.5 * cm, "Generated by Threat Intelligence Dashboard (Secure Edition)")
+    c.save()
+    return output_path
